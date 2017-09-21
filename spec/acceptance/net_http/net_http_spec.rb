@@ -150,6 +150,13 @@ describe "Net:HTTP" do
     expect(response.get_fields('Set-Cookie')).to eq(['bar=bazz', 'foo=bar'])
   end
 
+  it "should handle headers with invalid UTF-8" do
+    bad_headers = { "accept" => "things\255" }
+    stub_http_request(:get, "www.example.com").to_return(headers: bad_headers)
+    response = Net::HTTP.get_response(URI.parse("http://www.example.com/"))
+    expect(response.get_fields('Accept')).to eq([])
+  end
+
   it "should yield block on response" do
     stub_http_request(:get, "www.example.com").to_return(body: "abc")
     response_body = ""
@@ -293,7 +300,7 @@ describe "Net:HTTP" do
     end
 
     it "should support the after_request callback on an request with block and read_body" do
-      response_body = ''.dup
+      response_body = ''
       http_request(:get, "http://localhost:#{port}/") do |response|
         response.read_body { |fragment| response_body << fragment }
       end
